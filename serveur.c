@@ -167,11 +167,11 @@ int parse_serv(msg message,int *sock){
 
 			case 4:{
 				fflush(stdout);
-				printf("new p_key : \n");
+				//printf("new p_key : \n");
 				unsigned char alice_pkey[crypto_box_PUBLICKEYBYTES+1];
 				for (int i = 0; i <= crypto_box_PUBLICKEYBYTES; ++i)
 				{
-					printf("%x",message.content[i]);
+					//printf("%x",message.content[i]);
 					alice_pkey[i] = message.content[i];
 				}
 				printf("\n\n");
@@ -188,11 +188,14 @@ int parse_serv(msg message,int *sock){
 				
 				crypto_aead_chacha20poly1305_keygen(s_key);
 				randombytes_buf(nonce, sizeof nonce);
-				printf("\n\nsecret key : ");
+
+				/*printf("\n\nsecret key : ");
 				for (int i = 0; i <= crypto_aead_chacha20poly1305_KEYBYTES; ++i)
 				{
 					printf("%x",s_key[i]);
 				}
+				*/
+
 				if (crypto_box_easy(ciphertext, s_key, crypto_aead_chacha20poly1305_KEYBYTES+2, nonce,
                     alice_pkey, bob_secretkey) != 0) {
 				    printf("erreur lors du chiffrement de la clée privée\n\n");				
@@ -206,27 +209,27 @@ int parse_serv(msg message,int *sock){
 					char chiffre_s_key[crypto_aead_chacha20poly1305_KEYBYTES + 2 + crypto_box_MACBYTES];
 				}struct_key;
 
-				printf("\n\n\nnonce : ");
+				//printf("\n\n\nnonce : ");
 				for (int i = 0; i <= crypto_box_NONCEBYTES; ++i)
 				{
 					struct_key.nonce[i] = nonce[i];
-					printf("%x",struct_key.nonce[i]);
+					//printf("%x",struct_key.nonce[i]);
 				}
-				printf("\n\nbob_key : ");
+				//printf("\n\nbob_key : ");
 				for (int i = 0; i <= crypto_box_PUBLICKEYBYTES; ++i)
 				{
 					struct_key.bob_key[i] = bob_publickey[i];
-					printf("%x",struct_key.bob_key[i]);
+					//printf("%x",struct_key.bob_key[i]);
 				}
-				printf("\n\ns_key : ");
+				//printf("\n\ns_key : ");
 				for (int i = 0; i <= crypto_aead_chacha20poly1305_KEYBYTES + 1 + crypto_box_MACBYTES; ++i)
 				{
 					struct_key.chiffre_s_key[i] = ciphertext[i];
-					printf("%x",struct_key.chiffre_s_key[i]);
+					//printf("%x",struct_key.chiffre_s_key[i]);
 				}
 
 				send(*sock,&struct_key,sizeof(struct_key),0);
-				printf("\n----------------\n\n");
+				//printf("\n----------------\n\n");
 				fflush(stdout);
 
 				char *path = "keys/";
@@ -242,15 +245,10 @@ int parse_serv(msg message,int *sock){
 				}
 
 				fwrite(&s_key,sizeof(s_key),1,keyFile);
-				printf("s : %ld\n\n",sizeof(s_key));
 				fclose(keyFile);
 
 				break;
 			}
-
-			/*
-			  plus qu'à mettre la clé dans le bon fichier !!!
-			*/
 			default:
 				break;
 		}
