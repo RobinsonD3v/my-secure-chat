@@ -588,7 +588,6 @@ int parse_command(char *cmd, int context, user *recipient){
 				case 20:
 					if (context == 1)
 					{
-						printf("génère une nouvelle clée\n");
 						return 5;
 					}
 					else{
@@ -617,6 +616,53 @@ int parse_command(char *cmd, int context, user *recipient){
 
 int main()
 {
+	extend_user me = get_you();
+
+	if (!me.user.share)
+	{
+		user you;
+		
+		char *buffer = malloc(37);
+		printf("ton pseudo : ");
+		fgets(buffer,32,stdin);
+		buffer[strlen(buffer)-1] = '\0';
+		strcpy(you.pseudo,buffer);
+		memset(buffer,0,37);
+
+		printf("ton ip : ");
+		fgets(buffer,15,stdin);
+		buffer[strlen(buffer)-1] = '\0';
+		strcpy(you.ip,buffer);
+		memset(buffer,0,37);
+
+		uuid_t binuuid;
+	    uuid_generate_random(binuuid);
+	    uuid_unparse(binuuid, buffer);
+	    strcpy(you.id,buffer);
+	    printf("ton id : %s\n",you.id);
+	    memset(buffer,0,37);
+
+	    printf("veux tu que ton profil soit partager automatiquement ? [Y/n] ");
+	    fgets(buffer,3,stdin);
+	    if (buffer[0] != 'n')
+	    {
+	    	buffer[0] = 'y';
+	    }
+	    you.share = buffer[0];
+	    memset(buffer,0,37);
+
+	    printf("et pour finir ton mot de passe (max 30 caractères) : ");
+	    fgets(buffer,31,stdin);
+	    
+	    make_you(you,buffer);
+	    free(buffer);
+
+	    me = get_you();
+	}
+
+
+	printf("bienvenue %s:%s !\n\n",me.user.pseudo,me.user.id);
+
 	while(1){
 		struct args_parse{
 			char cmd[1001];
