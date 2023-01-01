@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sodium.h>
+#include <uuid/uuid.h>
 /*
 todo : 
 	   l'overflow avec le nbr de thread
