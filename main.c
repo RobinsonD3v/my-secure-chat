@@ -1,3 +1,6 @@
+#include "chat.h"
+#include <pthread.h>
+
 int main()
 {
     pthread_t threads[2];
