@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sodium.h>
 #include <uuid/uuid.h>
+
 /*
 todo : 
 	   l'overflow avec le nbr de thread
@@ -88,7 +89,7 @@ typedef struct
 
 //fonction
 
-int serveur(void);
+void *serveur_process(void *args);
 int client(void);
 void *server_thread(void *arg);
 temps get_date(void);
@@ -113,5 +114,8 @@ int send_file(void *argp);
 int get_presence(void);
 int parse_command(char *cmd, int context,user *recipient);
 int parse_serv(msg message,int *sock);
+void *client_process(void *args);
 
 #endif
+
+//les key qui ne se génère pas seul !!!
