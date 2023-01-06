@@ -8,7 +8,7 @@
 #include <time.h>
 #include <uuid/uuid.h>
 #include <sys/stat.h>
-#include <libexplain/fwrite.h>
+//#include <libexplain/fwrite.h>
 
 
 #define NUM_THREADS	4
@@ -196,10 +196,13 @@ int client()
 
     strcpy(hist_args.id,recipient.id);
 
-    char *path = "conv/";
-			char *filePath = malloc(strlen(path)+strlen(recipient.id)+1);
-			strcpy(filePath,path);
-			strcat(filePath,recipient.id);
+    char *path = malloc(strlen(getenv("HOME"))+strlen("/my_secure_chat/conv/")+1);
+    strcpy(path,getenv("HOME"));
+    strcat(path,"/my_secure_chat/conv/");
+
+	char *filePath = malloc(strlen(path)+strlen(recipient.id)+1);
+	strcpy(filePath,path);
+	strcat(filePath,recipient.id);
 
     FILE *testFichier = fopen(filePath,"a");
 	    	if (!testFichier)
@@ -259,7 +262,10 @@ void *afficher_historique(void *args){
 	args_hist = args;
 	char id[37];
 	strcpy(id,args_hist->id);
-	char *path = "conv/";
+
+	char *path = malloc(strlen(getenv("HOME"))+strlen("/my_secure_chat/conv/")+1);
+    strcpy(path,getenv("HOME"));
+    strcat(path,"/my_secure_chat/conv/");
 	char *filePath = malloc(strlen(path)+strlen(id));
 	strcpy(filePath,path);
 	strcat(filePath,id);
@@ -290,7 +296,9 @@ void *afficher_historique(void *args){
 	    		char *decrypted = malloc(1000);
 	    		unsigned long long decrypted_len;
 
-	    		char *path2 = "keys/";
+	    		char *path2 = malloc(strlen(getenv("HOME"))+strlen("/my_secure_chat/keys/")+1);
+			    strcpy(path2,getenv("HOME"));
+			    strcat(path2,"/my_secure_chat/keys/");
 				char *filePathKey = malloc(strlen(path2)+strlen(id));
 				strcpy(filePathKey,path2);
 				strcat(filePathKey,id);
@@ -304,13 +312,14 @@ void *afficher_historique(void *args){
 				fread(&key,sizeof(key),1,keyFile);
 				fclose(keyFile);
 				
-				printf("nonce : ");
+				/*printf("nonce : ");
 				for (int i = 0; i < crypto_aead_xchacha20poly1305_ietf_NPUBBYTES; ++i)
 				{
 					printf("%x",message.nonce[i]);
 				}
 				printf("\n");
-				printf("l : %ld\n",strlen(message.content) );
+				printf("l : %ld\n",strlen(message.content) );*/
+				
 	    		if (crypto_aead_xchacha20poly1305_ietf_decrypt(decrypted, 
 	    								   &decrypted_len,
                                            NULL,
@@ -347,7 +356,11 @@ temps get_date(){
 }
 
 user get_user(char *pseudo){
-	FILE *userList = fopen("userlist","r");
+	char *path = malloc(strlen(getenv("HOME"))+strlen("/my_secure_chat/userlist")+1);
+    strcpy(path,getenv("HOME"));
+    strcat(path,"/my_secure_chat/userlist");
+
+	FILE *userList = fopen(path,"r");
 	user utilisateur;
     
     memset(&utilisateur,0,sizeof(utilisateur));
@@ -415,7 +428,12 @@ user get_user(char *pseudo){
 }
 
 int add_user(user utilisateur){
-	FILE *userList = fopen("userlist","a");
+	char *path = malloc(strlen(getenv("HOME"))+strlen("/my_secure_chat/userlist")+1);
+    strcpy(path,getenv("HOME"));
+    strcat(path,"/my_secure_chat/userlist");
+    
+	FILE *userList = fopen(path,"a");
+
 	if (!userList)
 	{
 		return(-1);
@@ -426,7 +444,12 @@ int add_user(user utilisateur){
 }
 
 int del_user(char *id){
-	FILE *userList = fopen("userlist", "r+");
+	char *path = malloc(strlen(getenv("HOME"))+strlen("/my_secure_chat/userlist")+1);
+    strcpy(path,getenv("HOME"));
+    strcat(path,"/my_secure_chat/userlist");
+    
+	FILE *userList = fopen(path,"r+");
+
 	int index = 0;
 	if (!userList)
 	{
@@ -453,7 +476,12 @@ int del_user(char *id){
 	return 0;
 }
 int get_user_index(char *id){
-	FILE *userList = fopen("userlist","r");
+	char *path = malloc(strlen(getenv("HOME"))+strlen("/my_secure_chat/userlist")+1);
+    strcpy(path,getenv("HOME"));
+    strcat(path,"/my_secure_chat/userlist");
+    
+	FILE *userList = fopen(path,"r");
+
 	user utilisateur;			
 
 	if (!userList)
@@ -494,7 +522,11 @@ user get_user_by_index(int index){
     	return utilisateur;
     }
     
-    FILE *userlist = fopen("userlist","r");
+    char *path = malloc(strlen(getenv("HOME"))+strlen("/my_secure_chat/userlist")+1);
+    strcpy(path,getenv("HOME"));
+    strcat(path,"/my_secure_chat/userlist");
+    
+	FILE *userlist = fopen(path,"r");
     
     if (!userlist)
     {
@@ -511,8 +543,17 @@ user get_user_by_id(char *id){
 	return get_user_by_index(get_user_index(id));
 }
 int clean_userlist(void){
-	FILE *old = fopen("userlist","r+");
-	FILE *new = fopen("userlist_temp","w+");
+	char *path = malloc(strlen(getenv("HOME"))+strlen("/my_secure_chat/userlist")+1);
+    strcpy(path,getenv("HOME"));
+    strcat(path,"/my_secure_chat/userlist");
+    
+	FILE *old = fopen(path,"r");
+
+	char *path2 = malloc(strlen(getenv("HOME"))+strlen("/my_secure_chat/userlist_temp")+1);
+    strcpy(path2,getenv("HOME"));
+    strcat(path2,"/my_secure_chat/userlist_temp");
+
+	FILE *new = fopen(path2,"w+");
 
 	if (!old || !new)
 	{
@@ -536,7 +577,12 @@ int clean_userlist(void){
 }
 
 int display_userlist(char all){
-	FILE * userList = fopen("userlist","r");
+	char *path = malloc(strlen(getenv("HOME"))+strlen("/my_secure_chat/userlist")+1);
+    strcpy(path,getenv("HOME"));
+    strcat(path,"/my_secure_chat/userlist");
+    
+	FILE *userList = fopen(path,"r");
+
 	user utilisateur;
 	if (!userList)
 	{
@@ -558,7 +604,11 @@ int display_userlist(char all){
 }
 
 int modify_user(char *id,user new){
-	FILE *old = fopen("userlist","r+");
+	char *path = malloc(strlen(getenv("HOME"))+strlen("/my_secure_chat/userlist")+1);
+    strcpy(path,getenv("HOME"));
+    strcat(path,"/my_secure_chat/userlist");
+    
+	FILE *old = fopen(path,"r+");
 	
 	if (!old)
 	{
@@ -585,7 +635,11 @@ int modify_user(char *id,user new){
 	return 0;
 }
 int modify_you(extend_user you){
-	FILE *old = fopen("you","r+");
+	char *path = malloc(strlen(getenv("HOME"))+strlen("/my_secure_chat/you")+1);
+    strcpy(path,getenv("HOME"));
+    strcat(path,"/my_secure_chat/you");
+    
+	FILE *old = fopen(path,"r+");
 
 	if (!old)
 	{
@@ -604,9 +658,16 @@ int modify_you(extend_user you){
 	}	
 }
 int make_you(user you,char pass[257]){
-	FILE *youFile = fopen("you","w");
+
+	char *path = malloc(strlen(getenv("HOME")) + strlen("/my_secure_chat/you")+1);
+	strcpy(path,getenv("HOME"));
+	strcat(path,"/my_secure_chat/you");
+
+	FILE *youFile = fopen(path,"w");
+
 	if (!youFile)
 	{		
+		printf("erreur ouverture make_you\n");
 		return -1;
 	}
 
@@ -622,7 +683,11 @@ int make_you(user you,char pass[257]){
 }
 
 extend_user get_you(){
-	FILE *you = fopen("you","r");
+	char *path = malloc(strlen(getenv("HOME")) + strlen("/my_secure_chat/you")+1);
+	strcpy(path,getenv("HOME"));
+	strcat(path,"/my_secure_chat/you");
+
+	FILE *you = fopen(path,"r");
 	extend_user ext_you;
 	
 	if (!you)
@@ -637,7 +702,11 @@ extend_user get_you(){
 }
 
 int display_online(void){
-	FILE * userList = fopen("userlist","r");
+	char *path = malloc(strlen(getenv("HOME")) + strlen("/my_secure_chat/userlist")+1);
+	strcpy(path,getenv("HOME"));
+	strcat(path,"/my_secure_chat/userlist");
+
+	FILE * userList = fopen(path,"r");
 	user utilisateur;
 	if (!userList)
 	{
