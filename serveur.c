@@ -35,7 +35,7 @@ void *server_thread(void *args){
 			printf("client %d disconected\n",serveurArgs->clientNumber);
 			break;
 		}
-		printf("%d/%d | %02d/%02d/%d |%d| %s -> %s\n",serveurArgs->clientNumber,*serveurArgs->clientTotal,message.date.jour,message.date.mois,message.date.annee,message.type,message.author.pseudo, message.content);
+		//printf("%d/%d | %02d/%02d/%d |%d| %s -> %s\n",serveurArgs->clientNumber,*serveurArgs->clientTotal,message.date.jour,message.date.mois,message.date.annee,message.type,message.author.pseudo, message.content);
 
 		parse_serv(message,&newSocket);	
 
@@ -72,28 +72,56 @@ int receive_contact(int *sock,int nb_contactes){
 	return 0;
 }
 
-int receive_file(int *sock,long long int size){
-	FILE *fichier = fopen("clone.png","wb");
+int receive_file(int *sock,unsigned long long int size,char *name){
+
+	const char * separators = "/";
+	char *previous = malloc(strlen(name));
+	strcpy(previous,name);
+
+    char *cutName = strtok ( name, separators );
+
+    while ( cutName != NULL ) {
+      	strcpy(previous,cutName);
+        cutName = strtok ( NULL, separators );
+    }
+
+    printf("name : .%s.\n",previous); //foutre ça dans un dossier dl
+    char *path = malloc(strlen(strlen(getenv("HOME"))+"/my_secure_chat/dl/")+101);
+    strcpy(path,getenv("HOME"));
+    strcat(path,"/my_secure_chat/dl/");
+    strcat(path,previous);
+
+	FILE *fichier = fopen(path,"wb");
 	char buff;
 
 	printf("télechargement : ");
 	int prev = -1;
-	for (long long int i = 0; i < size; ++i)
+	long int test = 0;
+	for (unsigned long long int i = 0; i < size; ++i)
 	{
 		int avancement = (int)((float)i/(float)(size-1)*100);
 
 		if(avancement % 10 == 0 && avancement != prev){
-			printf("%d%% ", avancement);
+			if (avancement > 10)
+			{
+				printf("\033[3D");
+			}
+			else if (avancement > 0)
+			{
+				printf("\033[2D");
+			}
+			printf("%d%%", avancement);
 			prev = avancement;
 			fflush(stdout);
 		}
-
 		read(*sock,&buff,1);
 		fwrite(&buff,1,1,fichier);
-	}
-	printf("\n");
-
+	}		
+		
+	printf("\ntéléchargement terminer\n\n");
+	fflush(stdout);
 	fclose(fichier);
+	
 	return 0;
 }
 
@@ -102,7 +130,9 @@ int parse_serv(msg message,int *sock){
 
 			case 0:
 			{
-				char *path = "conv/";
+				char *path = malloc(strlen(getenv("HOME")) + strlen("/my_secure_chat/conv/")+1);
+				strcpy(path,getenv("HOME"));
+				strcat(path,"/my_secure_chat/conv/");
 				char *filePath = malloc(strlen(path)+strlen(message.author.id));
 				strcpy(filePath,path);
 				strcat(filePath,message.author.id);
@@ -111,7 +141,7 @@ int parse_serv(msg message,int *sock){
 
 				printf("id : %s\n",message.author.id);
 
-				printf("nonce : ");
+				/*printf("nonce : ");
 				for (int i = 0; i < crypto_aead_xchacha20poly1305_ietf_NPUBBYTES; ++i)
 				{
 					printf("%x",message.nonce[i]);
@@ -123,7 +153,7 @@ int parse_serv(msg message,int *sock){
 					printf("%x",message.content[i]);
 				}
 				printf("\n");
-
+				*/
 				if (conv)
 				{
 					fwrite(&message,sizeof(message),1,conv);
@@ -160,8 +190,16 @@ int parse_serv(msg message,int *sock){
 				break;
 			}
 			case 3:{
-				long long int size = atoi(message.content);
-				receive_file(sock,size);
+				unsigned long long int size = 0;
+				char name[100];
+
+				sscanf(message.content,"%llu:%s",&size,name);
+
+				printf("%llu:%s\n",size,name);
+				fflush(stdout);
+				
+				receive_file(sock,size,name);
+				return 0;
 				break;
 			}
 
@@ -232,7 +270,9 @@ int parse_serv(msg message,int *sock){
 				//printf("\n----------------\n\n");
 				fflush(stdout);
 
-				char *path = "keys/";
+				char *path = malloc(strlen(getenv("HOME")) + strlen("/my_secure_chat/keys/")+1);
+				strcpy(path,getenv("HOME"));
+				strcat(path,"/my_secure_chat/keys/");
 
 				char *filePathKey = malloc(strlen(path)+strlen(message.author.id));
 				strcpy(filePathKey,path);
@@ -254,8 +294,9 @@ int parse_serv(msg message,int *sock){
 		}
 }
 
-int serveur2()
+void *serveur_process(void *args)
 {	
+	printf("serveur : ok ");
 	pthread_t threads[NUM_THREADS];
     int serverSocket, newSocket;
     int *clientNumber = malloc(sizeof(int));*clientNumber=0;
@@ -317,11 +358,5 @@ int serveur2()
     
     shutdown(serverSocket, SHUT_RDWR);
     free(clientNumber);
-
     return 0;
-}
-
-int main(){
-	serveur2();
-	return 0;
 }
