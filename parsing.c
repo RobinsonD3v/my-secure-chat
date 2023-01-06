@@ -440,7 +440,9 @@ int parse_command(char *cmd, int context, user *recipient){
 						Parsed *arg = malloc(sizeof(*arg));
 						arg = parsed_list->first;
 
-						char *path = "conv/";
+						char *path = malloc(strlen(getenv("HOME")) + strlen("/my_secure_chat/conv/")+1);
+						strcpy(path,getenv("HOME"));
+						strcat(path,"/my_secure_chat/conv/");
 						char *filePath = malloc(strlen(path)+strlen(arg->cmd)+1);
 						strcpy(filePath,path);
 						strcat(filePath,arg->cmd);
@@ -458,7 +460,9 @@ int parse_command(char *cmd, int context, user *recipient){
 					//récup l'utilisateur à qui je parle
 					if (recipient)
 					{
-						char *path = "conv/";
+						char *path = malloc(strlen(getenv("HOME")) + strlen("/my_secure_chat/conv/")+1);
+						strcpy(path,getenv("HOME"));
+						strcat(path,"/my_secure_chat/conv/");
 						char *filePath = malloc(strlen(path)+strlen(recipient->id)+1);
 						strcpy(filePath,path);
 						strcat(filePath,recipient->id);
@@ -614,8 +618,9 @@ int parse_command(char *cmd, int context, user *recipient){
    
 }
 
-int main()
+void *client_process(void *args)
 {
+	printf("client : ok ");
 	extend_user me = get_you();
 
 	if (!me.user.share)
@@ -661,7 +666,7 @@ int main()
 	}
 
 
-	printf("bienvenue %s:%s !\n\n",me.user.pseudo,me.user.id);
+	printf("\n\nBienvenue %s:%s !\n\n",me.user.pseudo,me.user.id);
 
 	while(1){
 		struct args_parse{
