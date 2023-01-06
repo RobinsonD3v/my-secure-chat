@@ -114,7 +114,7 @@ int send_contactes(void *argp){
 	}
 }
 
-int send_file(void *argp){
+int send_file(void *argp){//marche même avec chmin absolue !!!
 
 	struct arg
 	{
@@ -128,33 +128,34 @@ int send_file(void *argp){
 	FILE *fichier = fopen(args->path,"rb");
 	if (!fichier)
 	{
+		printf("ouverture du fichier (%s) impossible\n\n",args->path);
 		return -1;
 	}
 
 	fseek(fichier, 0, SEEK_END);
-	long long int size = ftell(fichier);
+	unsigned long long int size = ftell(fichier);
 	fseek(fichier, 0, SEEK_SET);
 	if (size <= 0)
 	{
 		return -1;
 	}
+	
+	printf("s : %llu",size);
 	msg firstMsg;
 	firstMsg.type = 3;
 	firstMsg.author = args->author.user;
 	strcpy(firstMsg.dest,args->id);
 	firstMsg.date = get_date();
-	sprintf(firstMsg.content,"%lld",size);
-	printf("s : %ld\n",send(*(args->sock),&firstMsg,sizeof(firstMsg),0));
-
+	sprintf(firstMsg.content,"%llu:%s",size,args->path);
+	send(*(args->sock),&firstMsg,sizeof(firstMsg),0);
+		size--;
 	char buff;
-	
-	for (long long int i = 0; i < size; ++i)
+	for (unsigned long long int i = 0; i <= size; ++i)
 	{
 		fread(&buff,1,1,fichier);
 		send(*(args->sock),&buff,1,0);
 	}
 	
-
 	fclose(fichier);
 	return 0;
 }
@@ -170,7 +171,7 @@ int send_new_pub_key(void *argp){
 	args = argp;
 
 	send(*(args->sock), &(args->message), sizeof(args->message), 0);
-	printf("\npkey send\n\n");
+	//printf("\npkey send\n\n");
 
 	struct struct_key
 	{
@@ -180,11 +181,12 @@ int send_new_pub_key(void *argp){
 	}struct_key;
 
 	long int ciphertext_len = crypto_aead_chacha20poly1305_KEYBYTES + 2 + crypto_box_MACBYTES;
-	printf("en attente réponse serv\n\n");
+	//printf("en attente réponse serv\n\n");
 
 	read(*(args->sock), &struct_key, sizeof(struct_key));
-	printf("réponse serv reçu\n\n");
-
+	//printf("réponse serv reçu\n\n");
+	
+	/*
 	printf("nonce : ");
 
 	for (int i = 0; i <= crypto_box_NONCEBYTES; ++i)
@@ -201,6 +203,7 @@ int send_new_pub_key(void *argp){
 	{
 		printf("%x",struct_key.chiffre_s_key[i]);
 	}
+	*/
 
 	unsigned char decrypted[crypto_aead_chacha20poly1305_KEYBYTES+2];
 
@@ -208,15 +211,19 @@ int send_new_pub_key(void *argp){
 	                         struct_key.bob_key, args->alice_secretkey) != 0) {
 	    printf("erreur lors du déchifremment s_key\n");
 	}
-
+	/*
 	printf("\n\n\nsecret_key : ");
 
+	
 	for (int i = 0; i < crypto_aead_chacha20poly1305_KEYBYTES+1; ++i)
 	{
 		printf("%x",decrypted[i]);
 	}
+	*/
 
-	char *path = "keys/";
+	char *path = malloc(strlen(getenv("HOME")) + strlen("/my_secure_chat/keys/")+1);
+	strcpy(path,getenv("HOME"));
+	strcat(path,"/my_secure_chat/keys/");
 
 	char *filePathKey = malloc(strlen(path)+strlen(args->message.dest));
 	strcpy(filePathKey,path);
@@ -229,9 +236,10 @@ int send_new_pub_key(void *argp){
 	}
 
 	fwrite(&decrypted,sizeof(decrypted),1,keyFile);
-	printf("\ns : %ld\n\n",sizeof(decrypted));
+	//printf("\ns : %ld\n\n",sizeof(decrypted));
 	fclose(keyFile);
-
+	printf("nouvelle clée généré avec succès\n\n");
+	
 	return 0;
 }
 
@@ -262,12 +270,15 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
 
     
     	
-    char *path = "conv/";
-			char *filePath = malloc(strlen(path)+strlen(recipient.id)+1);
-			strcpy(filePath,path);
-			strcat(filePath,recipient.id);
+		char *path = malloc(strlen(getenv("HOME")) + strlen("/my_secure_chat/conv/")+1);
+		strcpy(path,getenv("HOME"));
+		strcat(path,"/my_secure_chat/conv/");
 
-    FILE *testFichier = fopen(filePath,"a");
+		char *filePath = malloc(strlen(path)+strlen(recipient.id)+1);
+		strcpy(filePath,path);
+		strcat(filePath,recipient.id);
+
+    	FILE *testFichier = fopen(filePath,"a");
 
 	    	if (!testFichier)
 	    	{
@@ -318,10 +329,13 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
 					unsigned char crypted[CRYPT_MESSAGE_LEN + crypto_aead_xchacha20poly1305_ietf_ABYTES];
 					unsigned long long crypted_len;
 
-					char *path = "keys/";
-					char *filePathKey = malloc(strlen(path)+strlen(recipient.id));
-					strcpy(filePathKey,path);
+					char *pathk = malloc(strlen(getenv("HOME")) + strlen("/my_secure_chat/keys/")+1);
+					strcpy(pathk,getenv("HOME"));
+					strcat(pathk,"/my_secure_chat/keys/");
+					char *filePathKey = malloc(strlen(pathk)+strlen(recipient.id));
+					strcpy(filePathKey,pathk);
 					strcat(filePathKey,recipient.id);
+
 					FILE *keyFile = fopen(filePathKey,"rb");
 
 					if (!keyFile){
@@ -448,7 +462,7 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
 				{
 					message.content[i] = alice_publickey[i];
 					args.alice_secretkey[i] = alice_secretkey[i];
-					printf("%x",message.content[i]);
+					//printf("%x",message.content[i]);
 				}
 
 
