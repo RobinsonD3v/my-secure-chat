@@ -288,6 +288,28 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
 		    		return -1;
 		    	}
 	    	}
+	    char *pathk2 = malloc(strlen(getenv("HOME")) + strlen("/my_secure_chat/keys/")+1);
+		strcpy(pathk2,getenv("HOME"));
+		strcat(pathk2,"/my_secure_chat/keys/");
+
+		char *filePathk2 = malloc(strlen(pathk2)+strlen(recipient.id)+1);
+		strcpy(filePathk2,pathk2);
+		strcat(filePathk2,recipient.id);
+
+    	FILE *testFichierk2 = fopen(filePathk2,"a");
+
+	    	if (!testFichierk2)
+	    	{
+	    		generate_private_key(&sockfd,me.user,recipient.id);
+	    		
+	    		if (!testFichierk2)
+		    	{
+		    		return -1;
+		    	}
+		    	else{
+		    		printf("clé privé généré avec succès\n");
+		    	}
+	    	}
 
 	fclose(testFichier);
 
@@ -324,7 +346,7 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
 					strcpy(message.dest,recipient.id);
 					message.author = me.user;
 					message.date = get_date();
-
+					printf("d : %d\n",message.date.heure);
 					unsigned char nonce[crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
 					unsigned char crypted[CRYPT_MESSAGE_LEN + crypto_aead_xchacha20poly1305_ietf_ABYTES];
 					unsigned long long crypted_len;
@@ -440,7 +462,7 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
 					break;
 				}
 			case 5:{
-				msg message;
+				/*msg message;
 				message.type = 4;
 				strcpy(message.dest,recipient.id);
 				message.author = me.user;
@@ -470,6 +492,8 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
 				args.message = message;
 
 				send_new_pub_key(&args);
+				*/
+				generate_private_key(&sockfd,me.user,recipient.id);
 				break;
 			}
 
