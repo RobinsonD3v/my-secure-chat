@@ -238,9 +238,6 @@ int client()
 	    		exit(1);
 	    	}
 	    	
-	    	if(ftrylockfile(fichier) != 0){
-	    		printf("fichier pas locker\n");
-	    	}
 	    	fwrite(&message,sizeof(message),1,fichier);
 	    	
 	    	fclose(fichier);
@@ -305,6 +302,7 @@ void *afficher_historique(void *args){
 				FILE *keyFile = fopen(filePathKey,"rb");
 
 				if (!keyFile){
+					printf("error keyfile");
 					break;
 				}
 				
@@ -330,7 +328,7 @@ void *afficher_historique(void *args){
 			    printf("une erreur a eu lieu\n");
 			}
 
-	    		printf("%s : %s\n\n",message.author.pseudo,decrypted);
+	    		printf("[%02d/%02d %02d:%02d] %s : %s\n\n",message.date.jour,message.date.mois,message.date.heure,message.date.minute,message.author.pseudo,decrypted);
 	    	}
 	    	printf("-> ");
 	    	fflush(stdout);	
@@ -352,6 +350,8 @@ temps get_date(){
 	date.jour = local->tm_mday;
 	date.mois = local->tm_mon + 1;
 	date.annee = local->tm_year + 1900;
+	date.minute = local->tm_min;
+	date.heure = local->tm_hour;
 	return date;
 }
 
@@ -511,7 +511,11 @@ user get_user_by_index(int index){
 	memset(&utilisateur,0,sizeof(utilisateur));
 
 	struct stat sb;
-    if (stat("userlist", &sb) == -1) {
+	char *path = malloc(strlen(getenv("HOME"))+strlen("/my_secure_chat/userlist")+1);
+    strcpy(path,getenv("HOME"));
+    strcat(path,"/my_secure_chat/userlist");
+
+    if (stat(path, &sb) == -1) {
         perror("stat");
         return utilisateur;
     }
@@ -521,10 +525,6 @@ user get_user_by_index(int index){
     {
     	return utilisateur;
     }
-    
-    char *path = malloc(strlen(getenv("HOME"))+strlen("/my_secure_chat/userlist")+1);
-    strcpy(path,getenv("HOME"));
-    strcat(path,"/my_secure_chat/userlist");
     
 	FILE *userlist = fopen(path,"r");
     
@@ -570,7 +570,7 @@ int clean_userlist(void){
 			index++;
 		}
 	}
-	remove("userlist");rename("userlist_temp","userlist");
+	remove(path);rename(path2,path);
 	printf("\n%d utilisateur(s) retirer avec succès\n\n", index);
 	fclose(old);fclose(new);
 	return 0;
@@ -730,7 +730,11 @@ int display_online(void){
 
 int total_user(){
 	struct stat sb;
-    if (stat("userlist", &sb) == -1) {
+	char *path = malloc(strlen(getenv("HOME")) + strlen("/my_secure_chat/userlist")+1);
+	strcpy(path,getenv("HOME"));
+	strcat(path,"/my_secure_chat/userlist");
+
+    if (stat(path, &sb) == -1) {
         perror("stat");
         return -1;
     }
@@ -798,6 +802,36 @@ int get_presence(void){
 }
 
 
-int generate_private_key(char *path){
+int generate_private_key(int *sockfd,user me,char *id){
+	msg message;
+	message.type = 4;
+	strcpy(message.dest,id);
+	message.author = me;
+	message.date = get_date();
+
+	unsigned char alice_publickey[crypto_box_PUBLICKEYBYTES];
+	unsigned char alice_secretkey[crypto_box_SECRETKEYBYTES];
+	crypto_box_keypair(alice_publickey, alice_secretkey);
+	
+	struct arg
+		{
+			int *sock;
+			msg message;
+			unsigned char alice_secretkey[crypto_box_SECRETKEYBYTES+1];
+
+		}args;
+
+	for (int i = 0; i <= crypto_box_PUBLICKEYBYTES; ++i)
+	{
+		message.content[i] = alice_publickey[i];
+		args.alice_secretkey[i] = alice_secretkey[i];
+		//printf("%x",message.content[i]);
+	}
+
+
+	args.sock = sockfd;
+	args.message = message;
+
+	send_new_pub_key(&args);
 	return 0;
 }
