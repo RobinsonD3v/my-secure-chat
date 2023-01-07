@@ -36,7 +36,7 @@ void *server_thread(void *args){
 			break;
 		}
 		//printf("%d/%d | %02d/%02d/%d |%d| %s -> %s\n",serveurArgs->clientNumber,*serveurArgs->clientTotal,message.date.jour,message.date.mois,message.date.annee,message.type,message.author.pseudo, message.content);
-
+		//printf("%d/%d %d:%d",message.date.jour,message.date.mois,message.date.heure,message.date.minute);
 		parse_serv(message,&newSocket);	
 
 	}	
@@ -139,7 +139,7 @@ int parse_serv(msg message,int *sock){
 
 				FILE* conv = fopen(filePath,"a");
 
-				printf("id : %s\n",message.author.id);
+				//printf("id : %s\n",message.author.id);
 
 				/*printf("nonce : ");
 				for (int i = 0; i < crypto_aead_xchacha20poly1305_ietf_NPUBBYTES; ++i)
