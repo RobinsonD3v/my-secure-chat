@@ -68,6 +68,8 @@ typedef struct{ // rajouter heure/minute
 	int jour;
 	int mois;
 	int annee;
+	int heure;
+	int minute;
 }temps;
 
 typedef struct{
@@ -115,7 +117,9 @@ int get_presence(void);
 int parse_command(char *cmd, int context,user *recipient);
 int parse_serv(msg message,int *sock);
 void *client_process(void *args);
+int generate_private_key(int *sockfd,user me,char *id);
+int send_new_pub_key(void *argp);
 
 #endif
 
-//les key qui ne se génère pas seul !!!
+//rendre propre les écriture du serv -> logs
