@@ -117,7 +117,7 @@ int parse_command(char *cmd, int context, user *recipient){
 
 		if (parsed_list == NULL || parsed == NULL)
 		{
-			printf("\nerreur allocation\n\n");
+			print_log("\nerreur allocation mémoire\n\n");
 			return -1;
 		}
 		parsed->next = NULL;
@@ -196,6 +196,7 @@ int parse_command(char *cmd, int context, user *recipient){
 
 					if(client2(recipient,&send_msg,&afficher_historique,&parse_command) != 0){
 						printf("une erreur c'est produite\n\n");
+						print_log("client : une erreur c'est produite\n");
 						return 1;
 					}
 					break;
@@ -230,6 +231,7 @@ int parse_command(char *cmd, int context, user *recipient){
 
 				    if(add_user(new) != 0){
 				    	printf("une erreur lors de la création de l'utilisateur a eu lieu\n");
+				    	print_log("client : une erreur lors de la création de l'utilisateur a eu lieu\n");
 				    }
 				    free(buffer);
 					break;
@@ -246,7 +248,7 @@ int parse_command(char *cmd, int context, user *recipient){
 								printf("cette utilisateur n'existe pas\n");
 								break;
 							default:
-								printf("une erreur a eu lieu\n");
+								print_log("client : une erreur a eu lieu\n");
 								break; 
 						}			
 					}
@@ -310,7 +312,8 @@ int parse_command(char *cmd, int context, user *recipient){
 						}
 					}
 					else{
-						printf("\nune erreur est survenue %s\n\n",me.user.id);
+						printf("une erreur est survenue\n");
+						print_log("client : erreur affichage me\n");
 					}
 					break;
 				}
@@ -359,6 +362,7 @@ int parse_command(char *cmd, int context, user *recipient){
 								break;
 							default:
 								printf("une erreur est survenue");
+								print_log("client : erreu modification utilisateur\n");
 								break;
 						}
 					}
@@ -431,6 +435,7 @@ int parse_command(char *cmd, int context, user *recipient){
 				case 10://clear_db
 					if(clean_userlist() != 0){
 						printf("\nune erreur est survenue\n\n");
+						print_log("client : erreur netoyage base de donnée contactes\n");
 					}
 					break;
 
@@ -450,7 +455,8 @@ int parse_command(char *cmd, int context, user *recipient){
 						FILE *fichier = fopen(filePath,"w");
 				    	if (!fichier)
 				    	{
-				    		printf("l'historique de conversation non trouvé\n");
+				    		printf("erreur : l'historique de conversation non trouvé\n");
+				    		print_log("erreur : (client) l'historique de conversation non trouvé\n");
 				    		break;
 				    	}
 				    	printf("\nhistorique effacé\n\n");
@@ -489,11 +495,13 @@ int parse_command(char *cmd, int context, user *recipient){
 						if(strcmp(arg->cmd,"all") == 0 || arg->cmd[0] == 'a'){
 							if(display_userlist('y') != 0){
 								printf("\nune erreur a eu lieu lors de l'affichage des contactes\n\n");
+								print_log("client : erreur affichage contactes\n");
 							}
 						}
 						else{
 							if(display_userlist('n') != 0){
 								printf("\nune erreur a eu lieu lors de l'affichage des contactes\n\n");
+								print_log("client : erreur affichage contactes\n");
 							}
 						}
 						
@@ -501,6 +509,7 @@ int parse_command(char *cmd, int context, user *recipient){
 					else{
 						if(display_userlist('n') != 0){
 							printf("\nune erreur a eu lieu lors de l'affichage des contactes\n\n");
+							print_log("client : erreur affichage contactes\n");
 						}
 					}
 					break;
@@ -508,6 +517,7 @@ int parse_command(char *cmd, int context, user *recipient){
 				case 13://display_online
 					if(display_online() != 0){
 						printf("\nune erreur est survenue\n\n");
+						print_log("client : erreur affichage personnes en ligne\n");
 					}
 					break;
 
@@ -526,6 +536,7 @@ int parse_command(char *cmd, int context, user *recipient){
 					if (modify_you(me) != 0)
 					{
 						printf("une erreur est survenue\n\n");
+						print_log("client : erreur modification du status\n");
 						break;
 					}
 					printf("status mis à jour avec succès\n\n");
@@ -536,6 +547,7 @@ int parse_command(char *cmd, int context, user *recipient){
 					{
 						if(get_presence() != 0){
 							printf("une erreur c'est produite\n\n");
+							print_log("client : erreur récupération status\n");
 						}
 						break;
 					}
@@ -605,6 +617,7 @@ int parse_command(char *cmd, int context, user *recipient){
 		}
 		else{
 			printf("une erreur a eu lieu\n");
+			print_log("client : erreur traitements de la commande\n");
 		}
 
 		clean_parsed(parsed_list);
@@ -620,7 +633,7 @@ int parse_command(char *cmd, int context, user *recipient){
 
 void *client_process(void *args)
 {
-	printf("client : ok ");
+	print_log("client : start\n");
 	extend_user me = get_you();
 
 	if (!me.user.share)
@@ -666,7 +679,7 @@ void *client_process(void *args)
 	}
 
 
-	printf("\n\nBienvenue %s:%s !\n\n",me.user.pseudo,me.user.id);
+	printf("\n\nBienvenue %s (%s) !\n\n",me.user.pseudo,me.user.id);
 
 	while(1){
 		struct args_parse{
@@ -685,6 +698,7 @@ void *client_process(void *args)
 		switch(parse_command(cmd,0,NULL)){
 			case 1:
 				printf("\nÀ bientôt !\n\n");
+				print_log("client : stop\n");
 				return 0;
 			case 4:{
 				;
