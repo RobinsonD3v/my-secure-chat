@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 //#include <libexplain/fwrite.h>
 
-#define NUM_THREADS	4
+#define NUM_THREADS	100
 #define PORT 8080
 
 typedef struct{
@@ -19,10 +19,38 @@ typedef struct{
 	int *clientTotal;
 }serveurStruct;
 
+void print_log(char *str){
+	char *path = malloc(strlen(getenv("HOME")) + strlen("/my_secure_chat/serveur.log")+1);
+	strcpy(path,getenv("HOME"));
+	strcat(path,"/my_secure_chat/serveur.log");
+
+	FILE *logfile = fopen(path,"a");
+
+	time_t now;time(&now);
+	int h,min,s,jour,mois,annee;
+	struct tm *local = localtime(&now);
+
+	h = local->tm_hour;        
+	min = local->tm_min;       
+	s = local->tm_sec;       
+	jour = local->tm_mday;          
+	mois = local->tm_mon + 1;     
+	annee = local->tm_year + 1900;  
+
+	if (logfile)
+	{
+		fprintf(logfile, "[%02d/%02d/%02d %02d:%02d:%02d] %s",jour,mois,annee,h,min,s,str);
+		fclose(logfile);
+	}
+}
+
 void *server_thread(void *args){
 	serveurStruct *serveurArgs = args;
 	int newSocket = serveurArgs->arg;
-    printf("new client : id -> %d\n", serveurArgs->clientNumber);
+	char logbuffer[100];
+	sprintf(logbuffer,"serveur : new client : id -> %d\n",serveurArgs->clientNumber);
+    printf("%s", logbuffer);
+    print_log(logbuffer);
 
 	while(1){
 		int valread;
@@ -32,7 +60,9 @@ void *server_thread(void *args){
 		if (valread <= 0 || message.content[0] == 0)
 		{
 			*serveurArgs->clientTotal = *serveurArgs->clientTotal - 1;
-			printf("client %d disconected\n",serveurArgs->clientNumber);
+			sprintf(logbuffer,"serveur : client %d disconected\n",serveurArgs->clientNumber);
+			print_log(logbuffer);
+			//printf("client %d disconected\n",serveurArgs->clientNumber);
 			break;
 		}
 		//printf("%d/%d | %02d/%02d/%d |%d| %s -> %s\n",serveurArgs->clientNumber,*serveurArgs->clientTotal,message.date.jour,message.date.mois,message.date.annee,message.type,message.author.pseudo, message.content);
@@ -46,7 +76,10 @@ void *server_thread(void *args){
 }
 
 int receive_contact(int *sock,int nb_contactes){
-	printf("contacte %d reçu :\n",nb_contactes);
+	char logbuff[100];
+	sprintf(logbuff,"serveur : %d contacte(s) reçu :\n",nb_contactes);
+	print_log(logbuff);
+	printf("%d contacte(s) reçu :\n",nb_contactes);
 
 	user *userlist = malloc(sizeof(user)* (nb_contactes+1));
 	
@@ -59,13 +92,11 @@ int receive_contact(int *sock,int nb_contactes){
 	for (int i = 0; i < nb_contactes; ++i)
 	{
 		printf("%d : .%s.\n",i,userlist[i].pseudo);
+	
 		if(get_user_index(userlist[i].id) == -1){
 			if(add_user(userlist[i])!= 0){
-				printf("une erreur s'est produit lors de l'ajout de l'utilisateur\n\n");
+				print_log("serveur : une erreur s'est produit lors de l'ajout de l'utilisateur\n\n");
 			}
-		}
-		else{
-			printf("l'utilisateur existe déjà !\n\n");
 		}
 	}
 
@@ -85,7 +116,6 @@ int receive_file(int *sock,unsigned long long int size,char *name){
         cutName = strtok ( NULL, separators );
     }
 
-    printf("name : .%s.\n",previous); //foutre ça dans un dossier dl
     char *path = malloc(strlen(strlen(getenv("HOME"))+"/my_secure_chat/dl/")+101);
     strcpy(path,getenv("HOME"));
     strcat(path,"/my_secure_chat/dl/");
@@ -94,9 +124,10 @@ int receive_file(int *sock,unsigned long long int size,char *name){
 	FILE *fichier = fopen(path,"wb");
 	char buff;
 
-	printf("télechargement : ");
 	int prev = -1;
 	long int test = 0;
+	printf("%s ",previous);
+
 	for (unsigned long long int i = 0; i < size; ++i)
 	{
 		int avancement = (int)((float)i/(float)(size-1)*100);
@@ -117,8 +148,8 @@ int receive_file(int *sock,unsigned long long int size,char *name){
 		read(*sock,&buff,1);
 		fwrite(&buff,1,1,fichier);
 	}		
-		
-	printf("\ntéléchargement terminer\n\n");
+	printf("\n");
+	print_log("serveur : téléchargement fichier terminer\n");
 	fflush(stdout);
 	fclose(fichier);
 	
@@ -160,7 +191,7 @@ int parse_serv(msg message,int *sock){
 					fclose(conv);
 				}
 				else{
-					printf("erreur : historique inaccessible !!!\n");
+					print_log("erreur : historique inaccessible !!!\n");
 					free(filePath);
 					return -1;
 				}
@@ -184,7 +215,10 @@ int parse_serv(msg message,int *sock){
 					if (me.user.online == 'y')
 						buff = 'y';
 
-					printf("send presence : %c\n",buff);
+					char logbuff[100];
+					sprintf(logbuff,"serveur : send presence : %c\n",buff);
+					print_log(logbuff);
+
 					send(*sock,&buff,sizeof(buff),0);
 				}
 				break;
@@ -195,7 +229,11 @@ int parse_serv(msg message,int *sock){
 
 				sscanf(message.content,"%llu:%s",&size,name);
 
-				printf("%llu:%s\n",size,name);
+				char logbuff[100];
+				sprintf(logbuff,"serveur : fichier : %lluo\n",size);
+				print_log(logbuff);
+
+				printf("[%02d/%02d %02d:%02d] : reception de ",message.date.jour,message.date.mois,message.date.heure,message.date.minute);
 				fflush(stdout);
 				
 				receive_file(sock,size,name);
@@ -212,7 +250,7 @@ int parse_serv(msg message,int *sock){
 					//printf("%x",message.content[i]);
 					alice_pkey[i] = message.content[i];
 				}
-				printf("\n\n");
+				//printf("\n\n");
 				fflush(stdout);
 
 				unsigned char bob_publickey[crypto_box_PUBLICKEYBYTES];
@@ -236,7 +274,7 @@ int parse_serv(msg message,int *sock){
 
 				if (crypto_box_easy(ciphertext, s_key, crypto_aead_chacha20poly1305_KEYBYTES+2, nonce,
                     alice_pkey, bob_secretkey) != 0) {
-				    printf("erreur lors du chiffrement de la clée privée\n\n");				
+				    print_log("erreur : lors du chiffrement de la clée privée\n");				
 				}
 
 
@@ -280,7 +318,7 @@ int parse_serv(msg message,int *sock){
 				FILE *keyFile = fopen(filePathKey,"wb");
 
 				if (!keyFile){
-					printf("erreur création fichier key");
+					print_log("erreur : création fichier key\n");
 					return -1;
 				}
 
@@ -296,7 +334,7 @@ int parse_serv(msg message,int *sock){
 
 void *serveur_process(void *args)
 {	
-	printf("serveur : ok ");
+	print_log("serveur : start\n");
 	pthread_t threads[NUM_THREADS];
     int serverSocket, newSocket;
     int *clientNumber = malloc(sizeof(int));*clientNumber=0;
@@ -349,7 +387,7 @@ void *serveur_process(void *args)
 	    	
 
 	    	if(pthread_create(&threads [*clientNumber],NULL,server_thread,serveurArgs) != 0){
-	    		printf("thread failled\n");
+	    		print_log("serveur : thread failled\n");
 	    	}
 	   		*clientNumber = *clientNumber + 1;
 
