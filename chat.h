@@ -7,29 +7,6 @@
 #include <sodium.h>
 #include <uuid/uuid.h>
 
-/*
-todo : 
-	   l'overflow avec le nbr de thread
-       
-       reorganiser 
-       
-       le parsing
-	   
-	   chiffrer
-
-	   faire une lib
-
-court terme :
-	   chiffrement
-	   		-> ya un pb sans doute avec la taille (aléatoire != 1015);
-	   		    overflow ???
-
-	   parse_serv est vraiment deg
-	   faire le client général
-
-	   puis passer au todo !!!
-*/
-
 //4e807496-065a-469d-96f2-9722d5513f35
 
 /*
@@ -64,7 +41,7 @@ typedef struct{
 	char del;
 }user;
 
-typedef struct{ // rajouter heure/minute
+typedef struct{
 	int jour;
 	int mois;
 	int annee;
@@ -75,7 +52,7 @@ typedef struct{ // rajouter heure/minute
 typedef struct{
 	int type;            
 	char dest[LEN_ID];   
-	user author;    //changer par author       
+	user author;       
 	temps date;          
 	char content[1016];
 	unsigned char nonce[crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
@@ -119,7 +96,8 @@ int parse_serv(msg message,int *sock);
 void *client_process(void *args);
 int generate_private_key(int *sockfd,user me,char *id);
 int send_new_pub_key(void *argp);
+void print_log(char *str);
 
 #endif
-
-//rendre propre les écriture du serv -> logs
+//mettre sur le github
+//test depuis une ip pub
