@@ -67,7 +67,7 @@ l'application est en soit simple d'utilisation, on distingue 2 cas:
 | help [commandes] | affiche le message d'aide                      |
 | key              | génère une nouvelle clée privée                |
 
-**note:** [arg] designe un argument facultatif alors que <arg> est un argument obligatoire
+**note:** [arg] designe un argument facultatif alors que \<arg\> est un argument obligatoire
 
 ## IP publique
 
