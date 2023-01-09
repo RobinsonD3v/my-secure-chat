@@ -140,7 +140,6 @@ int send_file(void *argp){//marche même avec chmin absolue !!!
 		return -1;
 	}
 	
-	printf("s : %llu",size);
 	msg firstMsg;
 	firstMsg.type = 3;
 	firstMsg.author = args->author.user;
@@ -209,7 +208,9 @@ int send_new_pub_key(void *argp){
 
 	if (crypto_box_open_easy(decrypted, struct_key.chiffre_s_key, ciphertext_len, struct_key.nonce,
 	                         struct_key.bob_key, args->alice_secretkey) != 0) {
-	    printf("erreur lors du déchifremment s_key\n");
+	    print_log("erreur : déchifremment clée privée\n");
+		printf("erreur déchifremment clée privée\n");
+		return -1;
 	}
 	/*
 	printf("\n\n\nsecret_key : ");
@@ -231,6 +232,7 @@ int send_new_pub_key(void *argp){
 	FILE *keyFile = fopen(filePathKey,"wb");
 
 	if (!keyFile){
+		print_log("erreur création fichier key\n");
 		printf("erreur création fichier key");
 		return -1;
 	}
@@ -251,7 +253,8 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
    
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1) {
-        printf("socket creation failed...\n");
+        print_log("erreur : socket creation failed\n");
+        printf("une erreur est survenue\n");
         exit(0);
     }
     
@@ -262,13 +265,11 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
     servaddr.sin_port = htons(PORT);
    
     if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) {
-        printf("connection with the server failed...\n");
-        exit(0);
+        printf("utilisateur hors ligne\n");
+        return 0;
     }
     else
         printf("connecté à %s\n",recipient.pseudo);
-
-    
     	
 		char *path = malloc(strlen(getenv("HOME")) + strlen("/my_secure_chat/conv/")+1);
 		strcpy(path,getenv("HOME"));
@@ -288,6 +289,8 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
 		    		return -1;
 		    	}
 	    	}
+	    
+	    fclose(testFichier);
 	    char *pathk2 = malloc(strlen(getenv("HOME")) + strlen("/my_secure_chat/keys/")+1);
 		strcpy(pathk2,getenv("HOME"));
 		strcat(pathk2,"/my_secure_chat/keys/");
@@ -296,24 +299,20 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
 		strcpy(filePathk2,pathk2);
 		strcat(filePathk2,recipient.id);
 
-    	FILE *testFichierk2 = fopen(filePathk2,"a");
+    	FILE *testFichierk2 = fopen(filePathk2,"r");
 
 	    	if (!testFichierk2)
 	    	{
 	    		generate_private_key(&sockfd,me.user,recipient.id);
-	    		
-	    		if (!testFichierk2)
-		    	{
-		    		return -1;
-		    	}
-		    	else{
-		    		printf("clé privé généré avec succès\n");
-		    	}
+	    	}
+	    	else{
+	    		fclose(testFichierk2);
 	    	}
 
-	fclose(testFichier);
-
 	pthread_t thread_hist;
+
+	printf("test\n");
+
 	if (history_function)
     {
 	    struct hist_args
@@ -346,7 +345,6 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
 					strcpy(message.dest,recipient.id);
 					message.author = me.user;
 					message.date = get_date();
-					printf("d : %d\n",message.date.heure);
 					unsigned char nonce[crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
 					unsigned char crypted[CRYPT_MESSAGE_LEN + crypto_aead_xchacha20poly1305_ietf_ABYTES];
 					unsigned long long crypted_len;
@@ -361,7 +359,8 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
 					FILE *keyFile = fopen(filePathKey,"rb");
 
 					if (!keyFile){
-						printf("erreur ouverture fichier keys");
+						print_log("erreur ouverture fichier keys\n");
+						printf("une erreur est survenue\n");
 						return -1;
 					}
 					
@@ -406,7 +405,8 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
 
 			    	if (!fichier)
 			    	{
-			    		printf("no file found\n");
+			    		print_log("erreur : historique non trouvé\n");
+			    		printf("une erreur est survenue\n");
 			    		return -1;
 			    	}
 
@@ -440,7 +440,8 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
 						printf("fichier envoyé avec succès !\n\n");
 					}
 					else{
-						printf("une erreur c'est produite\n\n");
+						print_log("client : erreur envoie fichier\n");
+						printf("une erreur est survenue\n");
 					}
 					break;
 				}	
@@ -503,7 +504,7 @@ int client2(user recipient, int (*send_function)(void *),void *(*history_functio
 					break;
 			}
 			
-			free(buffer);
+			//free(buffer);
 		}
 	}
 	close(sockfd);
