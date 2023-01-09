@@ -22,74 +22,6 @@ typedef struct{
 	int *clientTotal;
 }serveurStruct;
 
-
-/*int serveur()
-{	
-	pthread_t threads[NUM_THREADS];
-    int serverSocket, newSocket;
-    int *clientNumber = malloc(sizeof(int));*clientNumber=0;
-    struct sockaddr_in address;
-    int opt = 1;
-    int addrlen = sizeof(address);
-    char buffer[sizeof(msg)] = { 0 };
-    char* hello = "Hello from server";
- 	
-    if ((serverSocket = socket(AF_INET, SOCK_STREAM, 0))
-        == 0) {
-        perror("socket failed");
-        exit(EXIT_FAILURE);
-    }
- 
-    if (setsockopt(serverSocket, SOL_SOCKET,
-                   SO_REUSEADDR | SO_REUSEPORT, &opt,
-                   sizeof(opt))) {
-        perror("setsockopt");
-        exit(EXIT_FAILURE);
-    }
-
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(PORT);
- 
-    if (bind(serverSocket, (struct sockaddr*)&address,
-             sizeof(address))
-        < 0) {
-        perror("bind failed");
-        exit(EXIT_FAILURE);
-    }
-    while(*clientNumber < 10){
-	    if (listen(serverSocket, 3) < 0) {
-	        perror("listen");
-	        exit(EXIT_FAILURE);
-	    }
-	    else{
-	    	if ((newSocket = accept(serverSocket,
-	    	                        (struct sockaddr*)&address,
-	    	                        (socklen_t*)&addrlen)) < 0) {
-	        perror("accept");
-	        exit(EXIT_FAILURE);
-	    	}
-	    	serveurStruct *serveurArgs = malloc(sizeof(serveurStruct));
-	    	
-	    	serveurArgs->arg = newSocket;
-	    	serveurArgs->clientNumber = *clientNumber;
-	    	serveurArgs->clientTotal = clientNumber;
-	    	
-
-	    	if(pthread_create(&threads [*clientNumber],NULL,server_thread,serveurArgs) != 0){
-	    		printf("thread failled\n");
-	    	}
-	   		*clientNumber = *clientNumber + 1;
-
-	    }
-	}
-    
-    shutdown(serverSocket, SHUT_RDWR);
-    free(clientNumber);
-
-    return 0;
-}
- */
 int client()
 {
 	clear();
@@ -156,7 +88,8 @@ int client()
     struct sockaddr_in serv_addr;
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        printf("\n Socket creation error \n");
+        print_log("client : erreur création socket\n");
+        printf("une erreur est survenue\n");
         return -1;
     }
  
@@ -165,8 +98,8 @@ int client()
  
     if (inet_pton(AF_INET, recipient.ip, &serv_addr.sin_addr)
         <= 0) {
-        printf(
-            "\nInvalid address/ Address not supported \n");
+        print_log("client : erreur, adresse ip invalide ou non suportée\n");
+    	printf("une erreur est survenue\n");
         return -1;
     }
  
@@ -174,7 +107,8 @@ int client()
          = connect(sock, (struct sockaddr*)&serv_addr,
                    sizeof(serv_addr)))
         < 0) {
-        printf("\nConnection Failed \n");
+        print_log("client : connexion failed");
+    	printf("une erreur est survenue\n");
         return -1;
     }
 
@@ -234,7 +168,8 @@ int client()
 
 	    	if (!fichier)
 	    	{
-	    		printf("no file found\n");
+	    		print_log("client : erreur, historique non trouvé\n");
+	    		printf("une erreur est survenue\n");
 	    		exit(1);
 	    	}
 	    	
@@ -274,6 +209,7 @@ void *afficher_historique(void *args){
 		struct stat sb;
 	    if (stat(filePath, &sb) == -1) {
 	        perror("stat");
+	        print_log("client : erreur, ouverture conversation\n");
 	        return NULL;
 	    }
 	   	
@@ -284,7 +220,8 @@ void *afficher_historique(void *args){
 	    	FILE *fichier = fopen(filePath,"r");
 	    	if (!fichier)
 	    	{
-	    		printf("no file found\n");
+	    		printf("une erreur est survenue\n");
+	    		print_log("client : erreur, ouverture conversation\n");
 	    		return NULL;
 	    	}
 	    	
@@ -302,7 +239,8 @@ void *afficher_historique(void *args){
 				FILE *keyFile = fopen(filePathKey,"rb");
 
 				if (!keyFile){
-					printf("error keyfile");
+					printf("une erreur est survenue\n");
+					print_log("client : erreur ouverture fichier key\n");
 					break;
 				}
 				
@@ -325,7 +263,8 @@ void *afficher_historique(void *args){
                                            ADDITIONAL_DATA,
                                            ADDITIONAL_DATA_LEN,
                                            message.nonce, key) != 0) {
-			    printf("une erreur a eu lieu\n");
+			    printf("une erreur a eu lieu lors du déchifremment\n");
+				print_log("client : erreur déchifremment du message\n");
 			}
 
 	    		printf("[%02d/%02d %02d:%02d] %s : %s\n\n",message.date.jour,message.date.mois,message.date.heure,message.date.minute,message.author.pseudo,decrypted);
@@ -369,6 +308,7 @@ user get_user(char *pseudo){
 
 	if (!userList)
 	{
+		print_log("client : erreur ouverture userlist\n");
 		return utilisateur;
 	}
 	int trouver = 0;
@@ -486,6 +426,7 @@ int get_user_index(char *id){
 
 	if (!userList)
 	{
+		print_log("client : erreur ouverture userlist\n");
 		return -2;
 	}
 	int index = 0;int found = 0;
@@ -517,6 +458,7 @@ user get_user_by_index(int index){
 
     if (stat(path, &sb) == -1) {
         perror("stat");
+        print_log("client : erreur ouverture userlist\n");
         return utilisateur;
     }
     int total = sb.st_size / sizeof(user);
@@ -557,6 +499,7 @@ int clean_userlist(void){
 
 	if (!old || !new)
 	{
+		print_log("client : erreur ouverture userlist\n");
 		return -1;
 	}
 	user utilisateur;
@@ -586,6 +529,7 @@ int display_userlist(char all){
 	user utilisateur;
 	if (!userList)
 	{
+		print_log("client : erreur ouverture userlist\n");
 		return -1;
 	}
 	int trouver = 0;
@@ -612,6 +556,7 @@ int modify_user(char *id,user new){
 	
 	if (!old)
 	{
+		print_log("client : erreur ouverture userlist\n");
 		return -1;
 	}
 
@@ -643,6 +588,7 @@ int modify_you(extend_user you){
 
 	if (!old)
 	{
+		print_log("client : erreur ouverture you\n");
 		return -1;
 	}
 	extend_user old_you = get_you();
@@ -667,7 +613,7 @@ int make_you(user you,char pass[257]){
 
 	if (!youFile)
 	{		
-		printf("erreur ouverture make_you\n");
+		print_log("client : erreur ouverture you\n");
 		return -1;
 	}
 
@@ -692,6 +638,7 @@ extend_user get_you(){
 	
 	if (!you)
 	{	
+		print_log("client : erreur ouverture you\n");
 		ext_you.pass[0] = 0;
 		return ext_you;
 	}
@@ -710,6 +657,7 @@ int display_online(void){
 	user utilisateur;
 	if (!userList)
 	{
+		print_log("client : erreur ouverture userlist\n");
 		return -1;
 	}
 	int trouver = 0;
@@ -736,6 +684,7 @@ int total_user(){
 
     if (stat(path, &sb) == -1) {
         perror("stat");
+        print_log("client : erreur ouverture userlist\n");
         return -1;
     }
 
@@ -754,7 +703,8 @@ int get_presence(void){
 	   	
 	    sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	    if (sockfd == -1) {
-	        printf("socket creation failed...\n");
+	        printf("une erreur est survenue\n");
+	        print_log("client : erreur, créations socket\n");
 	        exit(0);
 	    }
 	    
@@ -825,7 +775,6 @@ int generate_private_key(int *sockfd,user me,char *id){
 	{
 		message.content[i] = alice_publickey[i];
 		args.alice_secretkey[i] = alice_secretkey[i];
-		//printf("%x",message.content[i]);
 	}
 
 
