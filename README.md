@@ -50,10 +50,10 @@ l'application est en soit simple d'utilisation, on distingue 2 cas:
 | new  [pseudo]    | identique à précédement                        |
 | join [pseudo]    | identique à précédement                        |
 | add              | ajoute un nouvel utilisateur                   |
-| remove <id>      | supprime un utilisateur des contactes          |
-| info <pseudo>    | affiche les infos du contacte (id,ip...)       |
+| remove \<id\>    | supprime un utilisateur des contactes          |
+| info \<pseudo\>  | affiche les infos du contacte (id,ip...)       |
 | me               | affiche tes infos                              |
-| modify <id>      | modifie les infos d'un contacte                |
+| modify \<id\>    | modifie les infos d'un contacte                |
 | modify_me        | modifie tes informations                       |
 | clear_db         | nettoie la base de données avec tes contactes  |
 | clear_history    | supprime l'historique de conversation          |
