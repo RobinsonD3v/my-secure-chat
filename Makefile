@@ -38,6 +38,7 @@ install:
 	mkdir -p $(USERDIR)/my_secure_chat/dl
 	touch $(USERDIR)/my_secure_chat/you
 	touch $(USERDIR)/my_secure_chat/userlist
+	touch $(USERDIR)/my_secure_chat/seveur.log
 	chown -R $(USERNAME):$(USERNAME) $(USERDIR)/my_secure_chat
 	chmod -R 774 $(USERDIR)/my_secure_chat
 
