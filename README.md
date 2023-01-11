@@ -9,7 +9,7 @@ C'est un petit système de messagerie chiffrée que j'ai développé seul. Là o
 - [Toutes les commandes](#Toutes-les-commandes)
 - [IP publique](#IP-publique)
 - [Détails techniques](#Détails-techniques)
-- [Améliorations futured](#Améliorations-futures)
+- [Améliorations futures](#Améliorations-futures)
 
 ## Installation
 
