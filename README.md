@@ -23,7 +23,7 @@ dépandance à intaller :
 
 Pour debian et distributions similaires:
 
-    sudo apt install pthread uuid-dev libsodium 
+    sudo apt install pthread uuid-dev libsodium-dev 
 
 ensuite, il suffit d'utiliser le Makefile que j'ai codé :
    
